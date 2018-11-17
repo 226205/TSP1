@@ -1,7 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <cmath>
-#include "BruteForce.h"
+//#include "BruteForce.h"
 
 int cityamount=0;
 int **distances;
@@ -11,7 +11,7 @@ std::string shortestpath= "";
 
 void wypisz();
 void BruteForce();
-void Counter(bool*, std::string, int, int, int, int, int);
+void BFrecurence(bool*, int*, int, int);
 void fileread();
 
 int  main()
@@ -30,7 +30,7 @@ int  main()
 void fileread()
 {
     std::fstream plik;
-    plik.open("oldplik.txt",std::ios::in);
+    plik.open("plik.txt",std::ios::in);
     if(plik.good()) //zabezpieczenie
     {
         plik>>cityamount;
@@ -54,55 +54,42 @@ void wypisz()
 }
 
 
-
 void BruteForce()
 {
-    int initial, next, current, distance = 0, lvl = 0;
-    bool* city = new bool[cityamount]; //tworze dynamicznej tablicy z miastami ktore odwiedzilem
-    std::string path= "";
-    for (int j = 0; j < cityamount; ++j)
-        city[j] = false;
-
-    for(int i = 0; i < cityamount; i++){
-        current = next = initial = i;
- //       for (int j = 0; j < cityamount; ++j)
- //           city[j] = false;
-
-//        path = 'A' + i;
-        std::cout<<i<<'\n';
-        Counter(city, path, distance, current, next, initial, lvl);
-    }
-    delete[] city;
-}
-void Counter(bool cityseen[], std::string currentpath, int distance, int current, int next, int initial, int lvl)
-{
+    int visited = 0, distance = 0;
     bool* city = new bool[cityamount];
-    std::string path = currentpath;
-    for(int i=0;i<cityamount;++i)
-        city[i]=cityseen[i];//w tym momencie wiem juz gdzie bylem, a gdzie musze wejsc
+    int* sequence = new int[cityamount + 1];
+    for (int i = 1; i < cityamount; ++i){
+        city[i] = false;
+        sequence[i] = 0;}
+    city[cityamount - 1] = true;
+    sequence[0] = sequence[cityamount] = cityamount - 1;
 
-    city[next] = true;
-    distance += distances[current][next];
-    path += 'A' + next;
-    current = next;
-    lvl++;
+    BFrecurence(city, sequence, distance, visited);
+}
 
-//    std::cout << lvl << "  " << path << ":  " << distance << '\n';
-
-    if( lvl < cityamount)
-        for(int i = 0; i < cityamount; i++)
+void BFrecurence(bool city[],int sequence[], int distance, int visited)
+{
+    visited++;
+    if(visited < cityamount){
+        for(int i = 0; i < cityamount; i++){
             if(city[i] != true){
-                next = i;
-                Counter(city, path, distance, current, next, initial, lvl);
+                city[i] = true;
+                sequence[visited] = i;
+                BFrecurence(city, sequence, distance, visited);
+                city[i] = false;
             }
-    if(lvl == cityamount){
-        distance += distances[current][initial];
-        path += 'A' + initial;
-//        std::cout << path << ":  " << distance << '\n';
-        if(shortestdistance > distance){
-            shortestdistance = distance;
-            shortestpath = path;
         }
     }
-    delete[] city;
+    if(visited == cityamount){
+        for(int i = 0; i < cityamount; i++)
+            distance += distances[sequence[i]][sequence[i+1]];
+        if(shortestdistance > distance){
+            shortestdistance = distance;
+            shortestpath = "";
+            for(int i = 0; i < cityamount + 1; i++){
+                shortestpath += 'A' + sequence[i];
+            }
+        }
+    }
 }
