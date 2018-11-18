@@ -9,28 +9,26 @@ int shortestdistance=INT_MAX;
 std::string shortestpath= "";
 
 
-void wypisz();
+void writetab(int**);
 void BruteForce();
 void BFrecurence(bool*, int*, int, int);
-void fileread();
+void fileread(std::string);
 
 int  main()
 {
-    bool* c = new bool[cityamount]; //tworze tablice z miastami ktore odwiedzilem
-    for (int i=0;i<cityamount;++i)
-        c[i]=false;
-    fileread();
-    wypisz();
+    std::string filename = "plik.txt";
+    fileread(filename);
+    writetab(distances);
     BruteForce();
     std::cout<<"Najkrotsza droga przez wszystkie miasta to: "<<shortestpath<<'\n';
     std::cout<<"Jej calkowity dystans wynosi: "<<shortestdistance;
 }
 
 //funkcja do odczytyawnia danych z pliku
-void fileread()
+void fileread(std::string filename)
 {
     std::fstream plik;
-    plik.open("plik.txt",std::ios::in);
+    plik.open(filename,std::ios::in);
     if(plik.good()) //zabezpieczenie
     {
         plik>>cityamount;
@@ -43,7 +41,7 @@ void fileread()
     }
 }
 
-void wypisz()
+void writetab(int** cities)
 {
     for(int i=0;i<cityamount;++i)
     {
@@ -66,6 +64,7 @@ void BruteForce()
     sequence[0] = sequence[cityamount] = cityamount - 1;
 
     BFrecurence(city, sequence, distance, visited);
+    delete [] city;
 }
 
 void BFrecurence(bool city[],int sequence[], int distance, int visited)
