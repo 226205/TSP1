@@ -175,11 +175,12 @@ int BBreductor(int** costtab)
                 if(costtab[i][j] != 0 && costtab[i][j] != 9999)         // ...maksymalnymi bądź zerem, odejmujemy wartość redukcji
                     costtab[i][j] -= currentcost;
         }
-
-
+    }
+    for(int i = 0; i < cityamount; i++)
+    {
         currentcost = 9999;                         // blok identyczny jak powyższy, tylko do obsługi kolumn
-        for(int j = 0; j < cityamount; j++)         // muszą występować osobno, bo inaczej mogłyby wystąpić podwójne redukcje
-            if(costtab[j][i] < currentcost)
+        for(int j = 0; j < cityamount; j++)         // muszą występować w osobnych pętlach, bo inaczej mogłyby wystąpić podwójne, bądź niepotrzebne redukcje...
+            if(costtab[j][i] < currentcost)         // tj niezbędne jest wyliczenie najpierw dla jednych, potem dla drugich
                 currentcost = costtab[j][i];
 
         if(currentcost != 0 && currentcost != 9999)
