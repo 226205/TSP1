@@ -20,7 +20,7 @@ void Writetab(int**);
 void menu();
 void BruteForce();
 void BFrecurence(bool*, int*, int, int);
-void BranchBounds();
+void BranchBound();
 int BBreductor(int**, int, int);
 
 
@@ -30,7 +30,7 @@ int  main()
     chosingfile();
     menu();
 //    BruteForce();
-//    BranchBounds();
+//    BranchBound();
 //    std::cout<<"Najkrotsza droga przez wszystkie miasta to: "<<shortestpath<<'\n';
 //    std::cout<<"Jej calkowity dystans wynosi: "<<shortestdistance;
 //    getche();
@@ -92,7 +92,7 @@ void Writetab(int** cities)
     for(int i=0;i<cityamount;++i)
     {
         for(int j=0;j<cityamount;++j)
-            std::cout<<distances[i][j]<<" ";
+            std::cout<<cities[i][j]<<" ";
         std::cout<<"\n";
     }
 }
@@ -112,7 +112,7 @@ void menu()
             std::cout<<"Jej calkowity dystans wynosi: "<<shortestdistance;
             break;
         case '2':
-            BranchBounds();
+            BranchBound();
             break;
         case '3':
             for(int i=0;i<cityamount;++i)        // zwolnij pamiec
@@ -137,9 +137,9 @@ void BruteForce()
     for (int i = 1; i < cityamount; ++i){       // zerowanie tablic
         city[i] = false;
         sequence[i] = 0;}
-    city[cityamount - 1] = true;                         // zaznaczenie miasta startowego jako odwiedzone
-    sequence[0] = sequence[cityamount] = cityamount - 1; // ustawienie miasta startowego na ostatnie - przeszukiwanie zaczynamy od
-                                                         // pierwszego, jest to najbardziej optymalne rozwiazanie
+    city[0] = true;                                      // zaznaczenie miasta startowego jako odwiedzone
+    sequence[0] = sequence[cityamount] = 0;              // ustawienie miasta startowego na ostatnie
+
     BFrecurence(city, sequence, distance, visited);
     delete [] city;
     delete [] sequence;
@@ -156,7 +156,7 @@ void BFrecurence(bool city[],int sequence[], int distance, int visited)
                 city[i] = true;                                     // kiedy znajdziemy nieodwiedzone, to zmieniamy jego status...
                 sequence[visited] = i;                              //...dopisujemy do sekwencji...
                 BFrecurence(city, sequence, distance, visited);     //... i wywolujemy rekurencje
-                city[i] = false;    //po wykonaniu rekurencji cofamy zmiane statusu, pozostale parametry beda takie jak przed rekurencja albo zostana nadpisane
+                city[i] = false;                                    // po wykonaniu rekurencji cofamy zmiane statusu, pozostale parametry beda takie jak przed rekurencja albo zostana nadpisane
             }
         }
     }
@@ -195,13 +195,14 @@ struct comparator                                   // objekt do porownywania no
 Vertex* newVertex(Vertex* parent, int citynumber)
 {
     Vertex* vertex = new Vertex;
-    vertex->visited = parent->visited+1;                    // zapisanie poziomu w drzewie ( '->' = '=' )
+    vertex->visited = parent->visited+1;                     // zapisanie poziomu w drzewie ( '->' = '=' )
     vertex->sequence = new int[vertex->visited+1];           // ustawienie wskaznika na poprzedniego node'a
 
     for(int i=0;i<vertex->visited;++i)                  // zapisanie w tablicy dotychczas odwiedzonych miast
         vertex->sequence[i] = parent->sequence[i];
 
     vertex->sequence[vertex->visited] = citynumber+1;
+//    vertex->sequence[vertex->visited] = citynumber;
     vertex->city = citynumber;
 //    vertex->sequence[parent->visited] = citynumber;                        // ustawienie numeru miasta node'a
     vertex->reducedmatrix = new int *[cityamount]; // utworzenie tablicy
@@ -223,12 +224,14 @@ Vertex* newVertex(Vertex* parent, int citynumber)
 
 //    vertex->reducedcost = parent->reducedcost + parent->reducedmatrix[parent->sequence[parent->visited]][vertex->sequence[parent->visited]] + BBreductor(vertex->reducedmatrix, vertex->sequence);
     vertex->reducedcost = parent->reducedcost + parent->reducedmatrix[parent->city][vertex->city] + BBreductor(vertex->reducedmatrix, vertex->city, parent->city);
-                                                    // policzenie kosztu dla vertex'a
+    Writetab(vertex->reducedmatrix);                                                  // policzenie kosztu dla vertex'a
+    for(int i = 0; i < vertex->visited; i++) std::cout << " -> " << vertex->sequence[i];
+
     return vertex;
 }
 
 //sequence[best->visited]
-void BranchBounds()
+void BranchBound()
 {
     std::clock_t begin = clock();
     Vertex* firstcity = new Vertex;                      // utworzenie nowej instancji struktury Vertex w sposob dynamiczny
@@ -251,7 +254,8 @@ void BranchBounds()
 
     while(!q.empty())                               // dopoki q nie jest pusta
     {
-        Vertex* best = q.top();                       // zapisz node'a we wskazniku
+        Vertex* best = q.top();                     // zapisz node'a we wskazniku
+//        Writetab(best->reducedmatrix);
         q.pop();                                    // zdejmij go z kolejki
         if(best->visited == cityamount - 1)        // jezeli to juz ostatni poziom
         {
