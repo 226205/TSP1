@@ -48,7 +48,7 @@ void chosingfile()
                 std::cout << "\nPodaj nazwe pliku: ";
                 std::cin >> filename;
                 if(fileread(filename) == 0){
-                    std::cout << "Nie udalo sie wczytac pliku o podanej nazwie, sproboj ponownie! \n";
+                    std::cout << "Nie udalo sie wczytac pliku o podanej nazwie, sprobuj ponownie! \n";
                     choice = 0;
                 }
                 break;
@@ -211,10 +211,14 @@ struct Vertex
 //            city[a] = true;
         }
 
-        for(int i = 1; i < visited; i++)
-            reducedcost += distances[i - 1][i];
+        {std::cout<<"\n\nwejsciowa sekwencja: ";
+        for(int i = 0; i < visited; i++)
+            std::cout<<" " << sequence[i];}
 
-        std::cout<<"\n\nwejsciowy reducedcost: " << reducedcost;
+        for(int i = 1; i < visited; i++)
+            reducedcost += distances[sequence[i - 1] - 1][sequence[i] - 1];
+
+        std::cout<<"\nwejsciowy reducedcost: " << reducedcost;
         for(int i = 0; i < cityamount; i++)     //ustawianie tablicy booli
             city[i] = false;
         for(int i = 0; i < visited; i++)
@@ -381,13 +385,14 @@ void BranchBound()
                     tempQ.pop();
                 }
 
+
                 if(tempBest->visited == (cityamount - 1)){
                     best = tempBest;
                     repeat = 0;
-//                    std::cout << "1234  " << best-> visited << '\n' << best->sequence[0]<< '\n' << best->sequence[1]<< '\n' << best->sequence[2];
+                    std::cout << "\n\n wychodze";
                 }
-
             }while(repeat != 0);
+            std::cout << "\n\n wyszedlem, kolejka posiada: " <<q.size()<< " vertexow\n";
         }
         else if(best->visited < (cityamount - 1))
         {
