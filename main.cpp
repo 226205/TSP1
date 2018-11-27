@@ -6,7 +6,8 @@
 #include <vector>
 #include <ctime>
 //#include "BruteForce.h"
-
+#define pqueue std::priority_queue <Vertex*, std::vector <Vertex*>, comparator>
+#define tqueue std::priority_queue <Vertex*, std::vector <Vertex*>, comparator>
 
 int cityamount=0;
 int **distances;
@@ -19,7 +20,7 @@ void menu();
 void BruteForce();
 void BFrecurence(bool*, int*, int, int, int*, int*);
 void BranchBound();
-int BBreductor(int**, int, int);
+//void BBreductor();
 
 
 
@@ -114,6 +115,7 @@ void menu()
             for(int i=0;i<cityamount;++i)        // zwolnij pamiec
                 delete[] distances[i];
             delete[] distances;
+            std::cout <<"\n\n";
             chosingfile();
             break;
         default:
@@ -139,11 +141,11 @@ void BruteForce()
 
     BFrecurence(city, sequence, distance, visited, pshortestdistance, bestsequence);
     std::clock_t end = clock();
-    std::cout<<"Najkrotsza droga przez wszystkie miasta to: ";
+    std::cout<<"\n\nNajkrotsza droga przez wszystkie miasta to: ";
     for(int i = 0; i < cityamount; i++)
-        std::cout << bestsequence[i] << " -> ";
-    std::cout<<"0\nJej calkowity dystans wynosi: " <<shortestdistance;
-    std::cout<<"Czas: " << double(end - begin) / CLOCKS_PER_SEC << "\n\n";
+        std::cout << bestsequence[i] + 1 << " -> ";
+    std::cout<<"1\nJej calkowity dystans wynosi: " <<shortestdistance;
+    std::cout<<"\nCzas: " << double(end - begin) / CLOCKS_PER_SEC << "\n\n";
     delete [] city;
     delete [] sequence;
     delete [] bestsequence;
@@ -176,160 +178,350 @@ void BFrecurence(bool city[],int sequence[], int distance, int visited, int* psh
 
 struct Vertex
 {
-    int** reducedmatrix;    // dwuwymiarowa tablica przejsc zredukowana dla konkretnego vertexa
     int* sequence;          // tablica zbierajaca informacje o kolejnosci miast juz odwiedzonych
-    int reducedcost;        // koszt wszystkich poprzedzajacych redukcji tablicy oraz przejsc
-    int city;               // aktualne miasto w ktorym sie znajduje
+    int reducedcost = 0;        // koszt wszystkich poprzedzajacych redukcji tablicy oraz przejsc
     int visited;            // ilosc juz odwiedzonych miast
     Vertex() {};
-    Vertex(Vertex* parent, int citynumber)
+    Vertex(Vertex* parent,bool* city, int newcitynumber)
     {
-//        Vertex* vertex = new Vertex;
-        visited = parent->visited+1;                     // zapisanie poziomu w drzewie ( '->' = '=' )
-        sequence = new int[visited+1];           // ustawienie wskaznika na poprzedniego node'a
+ //       std::cout << "sadad" << newcitynumber;
+        visited = parent->visited + 1;                     // zapisanie poziomu w drzewie ( '->' = '=' )
+        sequence = new int[visited];           // ustawienie wskaznika na poprzedniego node'a
 
-        for(int i=0;i<visited;++i)                  // zapisanie w tablicy dotychczas odwiedzonych miast
-            sequence[i] = parent->sequence[i];
+        for(int p=0;p<visited - 1;++p){                  // zapisanie w tablicy dotychczas odwiedzonych miast
+            sequence[p] = parent->sequence[p];
+            std::cout << " \nparent: " << sequence[p];
+        }
+        std::cout << " visited: " << visited;
 
-        sequence[visited] = citynumber+1;
-    //    vertex->sequence[vertex->visited] = citynumber;
-        city = citynumber;
-    //    vertex->sequence[parent->visited] = citynumber;                        // ustawienie numeru miasta node'a
-        reducedmatrix = new int *[cityamount]; // utworzenie tablicy
+//        int a = newcitynumber + 1;
+//        std::cout << " a: " << a;
+//        sequence[visited - 1] = a;
+        sequence[visited - 1] = newcitynumber + 1;
+        std::cout << " child: " << sequence[visited - 1];
 
-        for(int i=0;i<cityamount;++i)
-            reducedmatrix[i]=new int[cityamount];
+        for(int i = 0; i < cityamount; i++)     //ustawianie tablicy booli
+            city[i] = false;
+//        std::cout << " sssssss " << visited;
+//        std::cout << " " << sequence[0]<<"eee";
+//        std::cout << " " << sequence[1];
+        for(int i = 0; i < visited; i++){
+            city[sequence[i]] = true;
+//            int a = sequence[i];
+//            city[a] = true;
+        }
 
-        for(int i=0;i<cityamount;++i)                // skopiowanie zredukowanej tablicy z parent do vertex
-            for(int j=0;j<cityamount;++j)
-                reducedmatrix[i][j] = parent->reducedmatrix[i][j];
+        for(int i = 1; i < visited; i++)
+            reducedcost += distances[i - 1][i];
 
-    //    for(int i=0;i<cityamount;++i)                // zabezpieczenie przed powrotem do odwiedzonego miasta
-    //    {
-    //        vertex->reducedmatrix[parent->city][i] = 9999;
-    //        vertex->reducedmatrix[i][vertex->city] = 9999;
-    //    }
-    //
-    //    vertex->reducedmatrix[vertex->city][0] = 9999;
+        std::cout<<"\n\nwejsciowy reducedcost: " << reducedcost;
+        for(int i = 0; i < cityamount; i++)     //ustawianie tablicy booli
+            city[i] = false;
+        for(int i = 0; i < visited; i++)
+            city[sequence[i] - 1] = true;
 
-    //    vertex->reducedcost = parent->reducedcost + parent->reducedmatrix[parent->sequence[parent->visited]][vertex->sequence[parent->visited]] + BBreductor(vertex->reducedmatrix, vertex->sequence);
-        reducedcost = parent->reducedcost + parent->reducedmatrix[parent->city][city] + BBreductor(reducedmatrix, city, parent->city);
-        Writetab(reducedmatrix);                                                  // policzenie kosztu dla vertex'a
-        for(int i = 0; i < visited; i++) std::cout << " -> " << sequence[i];
+        std::cout <<" \nco dodajemy: ";
+        for(int temp, i = 0; i < cityamount; i++){                      // odtwarzanie wszystkich rzedow
+            temp = INT_MAX;
+            std::cout <<" \n\ns:" <<i<< " c:" <<city[i];                                            // ustawienie maksymalnej wartosci w rzedzie do porownan
+            if(city[i] == false || i == (sequence[visited - 1]) - 1){         // zabronienie wszystkich rzedow z ktorych miasta znajduja sie w sekwencji poza ostatnim
+                    std::cout <<" weszlo";
+                for(int j = 0; j < cityamount; j++){                     // odtwarzanie wszystkich miast w rzedach
+                    if(city[j] == false || (j == sequence[0]) - 1){            // zabronienie wszystkich kolumn z ktorych miasta znajduja sie w sekwencji poza pierwszym
+                        std::cout << " a:" << j;
+                        if(!(i == (sequence[visited - 1] - 1) && j == (sequence[visited - 2]) - 1)){
+                        std::cout <<" wlaz " << sequence[visited - 2] - 1 << "," <<(sequence[visited - 1]) - 1;
+                        if(i != j && distances[i][j] < temp){  // pierwsze dwa to zabronienie powrotu do miasta
+                                            // startowego, potem czy nie znajdujemy sie na przekatnej(odwolanie do samego siebie), a na koniec
+                                            // porownanie czy mamy aktualne minimum w rzedzie
+                            temp = distances[i][j];
+                            std::cout <<" + " << i <<','<<j<<'='<<distances[i][j];
+                        }
+                    }
+                    }
+                }
+                std::cout<<" d:" << temp;
+                reducedcost += temp;
+            }
+        }
+        std::cout << " reducedcost: " << reducedcost;
 
+
+//        BBreductor(Vertex*, city);
+//        currentcity = newcitynumber;                       // ustawienie numeru miasta node'a
+
+
+                                                 // policzenie kosztu dla vertex'a
+//        for(int i = 0; i < visited; i++) std::cout << " -> " << sequence[i];
     }
-
+    ~Vertex()
+    {
+        delete[] sequence;
+    }
 };
 
 struct comparator                                   // objekt do porownywania node'ow w kolejce priorytetowej
 {
-    bool operator()(const Vertex* first, const Vertex* second) const
+    bool operator()(Vertex* first, Vertex* second)
     {
-        return first->reducedcost > second->reducedcost;          // zwraca wynik w postaci bool, porownuje czy koszt pierwszego
+        if(first -> reducedcost > second -> reducedcost)
+            return true;
+        else if(first -> reducedcost < second -> reducedcost)
+            return false;
+        else
+            return first->visited > second->visited;          // zwraca wynik w postaci bool, porownuje czy koszt pierwszego
     }                                                             // przekazanego node'a jest wiekszy niz drugiego
 };
 
+//struct comparator2                                   // objekt do porownywania node'ow w kolejce priorytetowej
+//{
+//    bool operator()(Vertex* first, Vertex* second)
+//    {
+//        if(first -> reducedcost - first -> visited > second -> reducedcost) - first -> visited
+//            return true;
+//        else if(first -> reducedcost - first -> visited < second -> reducedcost - first -> visited)
+//            return false;
+//        else
+//            return first->visited > second->visited;          // zwraca wynik w postaci bool, porownuje czy koszt pierwszego
+//    }                                                             // przekazanego node'a jest wiekszy niz drugiego
+//};
 
 void BranchBound()
 {
-    std::clock_t begin = clock();
+//    std::clock_t begin = clock();
+
+    int UpperBound = INT_MAX;
+    int* solution = new int[cityamount + 1];
+    solution[0] = solution[cityamount] = 1;
+    bool* city = new bool[cityamount];
+    for(int i = 1; i < cityamount; i++)
+        city[i] = false;
+    city[0] = true;
+
     Vertex* firstcity = new Vertex;                      // utworzenie nowej instancji struktury Vertex w sposob dynamiczny
-    firstcity->city =0;                                  // przypisanie wartości do struct.city dla dynamicznie deklarowanych instancji struktury( '->' = '=' )
-    firstcity->reducedmatrix = new int* [cityamount];
-        for(int i=0;i<cityamount;++i)
-            firstcity->reducedmatrix[i]=new int[cityamount];
-        for(int i=0;i<cityamount;++i)
-            for(int j=0;j<cityamount;++j)
-                firstcity->reducedmatrix[i][j] = distances[i][j];
+//    firstcity->currentcity =0;                                  // przypisanie wartości do struct.city dla dynamicznie deklarowanych instancji struktury( '->' = '=' )
+    firstcity->visited = 1;
+    firstcity->sequence = new int[firstcity->visited];      // tworzenie tablicy odwiedzonych miast wielkoscia zalezne od ilosci juz odwiedzonych
+    firstcity->sequence[firstcity->visited - 1] = 1;
 
-    firstcity->reducedcost = BBreductor(firstcity->reducedmatrix, firstcity->city, firstcity->city);
-    firstcity->visited = 0;
-    firstcity->sequence = new int[firstcity->visited + 1];      // tworzenie tablicy odwiedzonych miast wielkoscia zalezne od ilosci juz odwiedzonych
-    firstcity->sequence[firstcity->visited] = 1;
+    int initLB = 0;
+    for(int temp, i = 0; i < cityamount; i++){
+        temp = INT_MAX;
+        for(int j = 0; j < cityamount; j++)
+            if(distances[i][j] < temp && i != j)
+                temp = distances[i][j];
+        initLB += temp;
+    }
 
-    std::priority_queue <Vertex*, std::vector <Vertex*>, comparator> q; // utworzenie kolejki do przechowywania
-                                                    // najbardziej obiecujacych node'ow w odpowiedniej kolejnosci
+    firstcity->reducedcost = initLB;        // poczatkowym lower boundem jest minimalny koszt przejscia wszystkich rzedow
+
+    pqueue q; // utworzenie kolejki do przechowywania najbardziej obiecujacych node'ow w odpowiedniej kolejnosci
     q.push(firstcity);                                   // w kolejce znajduje sie korzen, czyli pierwsze miasto
 
+    int GreedyAlgorithm = cityamount*cityamount;
     while(!q.empty())                               // dopoki q nie jest pusta
     {
         Vertex* best = q.top();                     // zapisz node'a we wskazniku
-//        Writetab(best->reducedmatrix);
         q.pop();                                    // zdejmij go z kolejki
-        if(best->visited == cityamount - 1)        // jezeli to juz ostatni poziom
-        {
-            std::clock_t end = clock();
-            std::cout<<"Czas: " << double(end - begin) / CLOCKS_PER_SEC << "\n\nKoszt sciezki wynosi: "<<best->reducedcost<<", a jej kolejnosc to:\n";
-            for(int i=0;i<best->visited+1;++i)        // wypisz potrzebne informacje
-                std::cout<<best->sequence[i]<<" -> ";
-            std::cout<<best->sequence[0]<<"\n\n";
-            for(int i=0;i<cityamount;++i)        // zwolnij pamiec
-                delete[] best->reducedmatrix[i];
-            delete[] best->reducedmatrix;
-            delete[] best->sequence;
-            break;                                  // wyjdz z programu
-        }
+        GreedyAlgorithm++;
 
-        for(int i=0;i<cityamount;++i)            // dla kazdego nieodwiedzonego miasta
-            if(best->reducedmatrix[best->city][i] < 9999)
+        if(GreedyAlgorithm >= cityamount*cityamount)
+        {
+            GreedyAlgorithm = 0;
+            tqueue tempQ;   //tymczasowa kolejka pomocnicza
+            Vertex* tempBest = best;
+
+            int repeat = 1;
+            do
             {
-                Vertex* child = new Vertex(best, i);     // utworz nowego node'a
-                q.push(child);                      // dodaj go do kolejki
-            }
 
-        for(int i=0;i<cityamount;++i)            // skoro wszystkie nieodwiedzone miasta sa w kolejce
-            delete[] best->reducedmatrix[i];        // usun obecnie rozwazane node'a z pamieci
-        delete[] best->reducedmatrix;
-        delete[] best->sequence;
-    }
-}
+//                for(int i = 0; i < cityamount; i++)     //ustawianie tablicy booli
+//                    city[i] = false;
+//                for(int i = 0; i < tempBest->visited; i++){
+////                    int a = tempBest->sequence[i];
+////                    city[a] = true;
+//                    city[tempBest->sequence[i] - 1] = true;
+//                }
 
 
-int BBreductor(int** costtab, int currentcity, int previouscity)
-{
-    int reductioncost = 0;           // koszt redukcji danej tabeli
-    int currentcost;                 // zmienna zachowujaca koszt danej kolumny/ rzedu
 
-    for(int i = 0; i < cityamount; i++)
-    {
-        currentcost = 9999;                      // przy przejsciu kazdego rzedu/ kolumny wracamy do wartosci maksymalnej
-        for(int j = 0; j < cityamount; j++)      // znajdujemy najmniejsza wartosc w rzedzie/ kolumnie i zapisujemy ja w postaci zmiennej
-            if(costtab[i][j] < currentcost)
-                currentcost = costtab[i][j];
+                for(int i = 0; i < cityamount; i++){
+                    for(int i = 0; i < cityamount; i++)     //ustawianie tablicy booli
+                        city[i] = false;
+                    for(int i = 0; i < tempBest->visited; i++)
+                        city[tempBest->sequence[i] - 1] = true;
 
-        if(currentcost != 0 && currentcost != 9999) // jesli wartosc w/w zmiennej jest rozna od zera oraz wartosci maksymalnej
-        {                                           // wtedy dodajemy ja do kosztu redukcji tabeli, jesli nie to na jej miejscu wystepuje pomijalne zero
-            reductioncost += currentcost;              // dodajemy koszt redukcji rzedu/ kolumny do sumy wszystkich redukcji
-            for(int j = 0; j < cityamount; j++)                         // dla wszystkich wartosci rzedu/ kolumny niebedacymi wartosciami...
-                if(costtab[i][j] != 0 && costtab[i][j] != 9999)         // ...maksymalnymi badz zerem, odejmujemy wartosc redukcji
-                    costtab[i][j] -= currentcost;
+                    std::cout << "\nboole w wejsciu ";
+                    for(int i = 0; i < cityamount; i++)
+                        std::cout<< " " << city[i];
+
+                    if(city[i] != true)
+                    {
+                        std::cout << " wejscia: " << i;
+                        Vertex* child = new Vertex(tempBest, city, i);    // tworzenie potomkow naszego najlepszego vertexa
+                        if(child->reducedcost < UpperBound)         // jezeli jest szansa na lepszy wynik niz aktualny upperbound, to zachowujemy potomka
+                            tempQ.push(child);
+                        else                                        // w przeciwnym razie pozbywamy sie go, gdyz nie uzyskamy lepszego rozwiazania za jego pomoca
+                            delete child;
+                    }
+                }
+                delete tempBest;                // usuniecie przeanalizowaniego vertexa
+
+                if(!tempQ.empty()){             // ustawienie znacznika tempBest dla najlepiej rokujacego dziecka, jesli jakies pozostaly
+                tempBest = tempQ.top();
+                tempQ.pop();
+                }
+                else
+                    repeat = 0;
+
+                //std::cout << " ggggg "  << tempBest->visited;
+                while(!tempQ.empty())           // przeniesienie nieuzytych vertexow do glownej kolejki, jesli jakies sa
+                {
+                    q.push(tempQ.top());
+                    tempQ.pop();
+                }
+
+                if(tempBest->visited == (cityamount - 1)){
+                    best = tempBest;
+                    repeat = 0;
+//                    std::cout << "1234  " << best-> visited << '\n' << best->sequence[0]<< '\n' << best->sequence[1]<< '\n' << best->sequence[2];
+                }
+
+            }while(repeat != 0);
         }
-    }
-    for(int i = 0; i < cityamount; i++)
-    {
-        currentcost = 9999;                         // blok identyczny jak powyzszy, tylko do obslugi kolumn
-        for(int j = 0; j < cityamount; j++)         // musza wystepowac w osobnych petlach, bo inaczej moglyby wystapic podwojne, badz niepotrzebne redukcje...
-            if(costtab[j][i] < currentcost)         // tj niezbedne jest wyliczenie najpierw dla jednych, potem dla drugich
-                currentcost = costtab[j][i];
-
-        if(currentcost != 0 && currentcost != 9999)
+        else if(best->visited < (cityamount - 1))
         {
-            reductioncost += currentcost;
-            for(int j = 0; j < cityamount; j++)
-                if(costtab[j][i] != 0 && costtab[j][i] != 9999)
-                    costtab[j][i] -= currentcost;
+            for(int i = 0; i < cityamount; i++)     //ustawianie tablicy booli
+                city[i] = false;
+            for(int i = 0; i < best->visited; i++)
+                city[best->sequence[i] - 1] = true;
+
+            for(int i = 0; i < cityamount; i++)
+                if(city[i] != true)
+                {
+                    Vertex* child = new Vertex(best, city, i);    // tworzenie potomkow naszego najlepszego vertexa
+                    if(child->reducedcost < UpperBound)         // jezeli jest szansa na lepszy wynik niz aktualny upperbound, to zachowujemy potomka
+                        q.push(child);
+                    else                                        // w przeciwnym razie pozbywamy sie go, gdyz nie uzyskamy lepszego rozwiazania za jego pomoca
+                        delete child;
+                }
+            delete best;
         }
+
+
+        if(best->visited == (cityamount - 1))   // doszlismy do vertexa z ktorego zostala jedna droga, do ostatniego miasta a potem na start
+        {
+            best->reducedcost = 0;
+            for(int i = 0; i < cityamount; i++)     //ustawianie tablicy booli
+                city[i] = false;
+            for(int i = 0; i < best->visited; i++)
+                city[best->sequence[i] - 1] = true;
+
+            for(int i = 0; i < cityamount; i++) // znalezienie ostatniego miasta
+                if(city[i] != true)
+                {
+//                    std::cout << "  ssssss  " << i;
+                    //int j;
+                    for(int j = 1; j < best->visited; j++){              // dodanie wszystkich skladowych dystansu, kolejno dystanse miedzy miastami w sekwencji
+                        best->reducedcost += distances[best->sequence[j-1]][best->sequence[j]];
+ //                       std::cout << "\n  dodajemy:  " << distances[best->sequence[j-1]][best->sequence[j]] << "  razem to:  "<<best->reducedcost;
+ //                       std::cout << "\n  dodajemy drogę z :  " << best->sequence[j-1] << " do: " << best->sequence[j];
+                        }
+                    best->reducedcost += distances[best->sequence[(best->visited - 1)]][i];
+                    best->reducedcost += distances[i][0];
+
+                    if(best->reducedcost < UpperBound)
+                    {
+                        UpperBound = best->reducedcost;     // nadpisanie gornej granicy, jesli osiagniety lisc ma nizszy koszt od gornej granicy
+                        for(int j = 1; j < best->visited; j++)
+                            solution[j] = best->sequence[j];
+                        solution[best->visited] = i;
+
+                        pqueue tQ;
+                        Vertex* tBest;
+                        while(!q.empty())
+                        {
+                            tBest = q.top();
+                            q.pop();
+                            if(tBest->reducedcost < UpperBound)
+                                tQ.push(tBest);
+                            else
+                                delete tBest;
+                        }
+                        while(!q.empty())
+                        {
+                            tBest = tQ.top();
+                            tQ.pop();
+                            q.push(tBest);
+                        }
+                    }
+                    delete best;
+                }
+        }
+
     }
-
-    if(currentcity != 0){
-    for(int i=0;i<cityamount;++i)                // zabezpieczenie przed powrotem do odwiedzonego miasta
-    {
-        costtab[previouscity][i] = 9999;
-        costtab[i][currentcity] = 9999;
-
-    }
-
-    costtab[previouscity][currentcity] = 9999;
-  }
-    return reductioncost;
+    std::cout << "Wynikiem BnB jest sekwencja: ";
+    for(int i = 0; i < cityamount + 1; i++)
+    std::cout <<" " << solution[i];
 }
+
+
+//void BBreductor(Vertex* currentV, bool* city)
+//{
+//
+//    }
+
+
+
+
+
+
+
+
+
+//    int reductioncost = 0;           // koszt redukcji danej tabeli
+//    int currentcost;                 // zmienna zachowujaca koszt danej kolumny/ rzedu
+//
+//    for(int i = 0; i < cityamount; i++)
+//    {
+//        currentcost = 9999;                      // przy przejsciu kazdego rzedu/ kolumny wracamy do wartosci maksymalnej
+//        for(int j = 0; j < cityamount; j++)      // znajdujemy najmniejsza wartosc w rzedzie/ kolumnie i zapisujemy ja w postaci zmiennej
+//            if(costtab[i][j] < currentcost)
+//                currentcost = costtab[i][j];
+//
+//        if(currentcost != 0 && currentcost != 9999) // jesli wartosc w/w zmiennej jest rozna od zera oraz wartosci maksymalnej
+//        {                                           // wtedy dodajemy ja do kosztu redukcji tabeli, jesli nie to na jej miejscu wystepuje pomijalne zero
+//            reductioncost += currentcost;              // dodajemy koszt redukcji rzedu/ kolumny do sumy wszystkich redukcji
+//            for(int j = 0; j < cityamount; j++)                         // dla wszystkich wartosci rzedu/ kolumny niebedacymi wartosciami...
+//                if(costtab[i][j] != 0 && costtab[i][j] != 9999)         // ...maksymalnymi badz zerem, odejmujemy wartosc redukcji
+//                    costtab[i][j] -= currentcost;
+//        }
+//    }
+//    for(int i = 0; i < cityamount; i++)
+//    {
+//        currentcost = 9999;                         // blok identyczny jak powyzszy, tylko do obslugi kolumn
+//        for(int j = 0; j < cityamount; j++)         // musza wystepowac w osobnych petlach, bo inaczej moglyby wystapic podwojne, badz niepotrzebne redukcje...
+//            if(costtab[j][i] < currentcost)         // tj niezbedne jest wyliczenie najpierw dla jednych, potem dla drugich
+//                currentcost = costtab[j][i];
+//
+//        if(currentcost != 0 && currentcost != 9999)
+//        {
+//            reductioncost += currentcost;
+//            for(int j = 0; j < cityamount; j++)
+//                if(costtab[j][i] != 0 && costtab[j][i] != 9999)
+//                    costtab[j][i] -= currentcost;
+//        }
+//    }
+//
+//    if(currentcity != 0){
+//    for(int i=0;i<cityamount;++i)                // zabezpieczenie przed powrotem do odwiedzonego miasta
+//    {
+//        costtab[previouscity][i] = 9999;
+//        costtab[i][currentcity] = 9999;
+//
+//    }
+//
+//    costtab[previouscity][currentcity] = 9999;
+//  }
+//    return reductioncost;
+//}
